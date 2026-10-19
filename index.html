@@ -1,0 +1,1567 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#276958">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ふたりの家計">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<title>ふたりの家計</title>
+<style>
+:root {
+  --green:#276958;
+  --ink:#243d34;
+  --muted:#617367;
+  --bg:#f5f5ef;
+  --line:#e1e8df;
+}
+* { box-sizing:border-box; }
+html { -webkit-text-size-adjust:100%; }
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
+  -webkit-tap-highlight-color:transparent;
+}
+main {
+  max-width:620px;
+  margin:auto;
+  padding:24px max(16px,env(safe-area-inset-right))
+          calc(40px + env(safe-area-inset-bottom))
+          max(16px,env(safe-area-inset-left));
+}
+header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+h1 { margin:0; font-size:25px; letter-spacing:.03em; }
+h2 { margin:0 0 16px; font-size:18px; }
+h3 { font-size:16px; overflow-wrap:anywhere; }
+p { line-height:1.7; }
+.tag,.muted,small {
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.7;
+}
+.card {
+  margin-top:18px;
+  padding:21px;
+  border:1px solid var(--line);
+  border-radius:21px;
+  background:white;
+}
+.hero { background:var(--green); color:white; border:0; }
+.hero .muted { color:#daebdf; }
+.total {
+  margin:8px 0 20px;
+  font-size:clamp(28px,8vw,42px);
+  font-weight:700;
+  overflow-wrap:anywhere;
+}
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.grid > * { min-width:0; }
+label { display:block; margin-bottom:15px; font-size:13px; }
+input,select,button,textarea { font:inherit; }
+input,select,textarea {
+  display:block;
+  width:100%;
+  min-width:0;
+  margin-top:7px;
+  padding:12px;
+  border:1px solid #d4dfd4;
+  border-radius:12px;
+  background:#fafbf8;
+  color:var(--ink);
+  font-size:16px;
+}
+input[type="date"],input[type="month"] { min-height:46px; }
+textarea { resize:vertical; }
+button,.button {
+  display:block;
+  width:100%;
+  min-height:46px;
+  padding:13px;
+  border:0;
+  border-radius:12px;
+  background:var(--green);
+  color:white;
+  font-size:15px;
+  font-weight:600;
+  text-align:center;
+  text-decoration:none;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+button:disabled { opacity:.45; cursor:default; }
+.secondary { background:#edf2ec; color:var(--green); }
+.lineButton { background:#079e45; }
+.danger { background:#f6eeea; color:#8b5143; }
+.month { max-width:168px; margin:0; }
+nav {
+  position:sticky;
+  top:0;
+  z-index:5;
+  display:flex;
+  gap:7px;
+  margin-top:19px;
+  padding:10px 0;
+  background:var(--bg);
+}
+nav button {
+  padding:12px 3px;
+  background:#e8eee6;
+  color:#385a48;
+  font-size:13px;
+}
+nav button[aria-pressed="true"] {
+  background:var(--green);
+  color:white;
+}
+[hidden] { display:none !important; }
+.split {
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  font-size:13px;
+}
+.split span { overflow-wrap:anywhere; min-width:0; }
+.bar {
+  height:9px;
+  margin:18px 0;
+  overflow:hidden;
+  border-radius:9px;
+  background:#b6d3b6;
+}
+.bar span { display:block; height:100%; background:#e8c899; }
+#settlement { font-size:21px; font-weight:700; overflow-wrap:anywhere; }
+.entry {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:15px 0;
+  border-bottom:1px solid var(--line);
+}
+.detail { flex:1; min-width:0; overflow-wrap:anywhere; }
+.detail strong,.detail small { display:block; }
+.entry .money { font-weight:600; white-space:nowrap; }
+.remove { width:auto; font-size:12px; padding:10px; }
+.check { display:flex; align-items:center; gap:9px; font-size:14px; }
+.check input { width:21px; height:21px; margin:0; }
+.notice {
+  padding:12px;
+  border-radius:12px;
+  background:#fff2d8;
+  color:#684a1e;
+  font-size:13px;
+  line-height:1.7;
+}
+#status { margin:5px 0; min-height:20px; }
+.scroll { max-height:360px; overflow:auto; }
+.assetRecord { padding:18px 0; border-bottom:1px solid var(--line); }
+.facts { white-space:pre-wrap; overflow-wrap:anywhere; }
+summary { padding:10px 0; cursor:pointer; font-weight:600; }
+footer { margin-top:25px; text-align:center; }
+button:focus-visible,a:focus-visible,summary:focus-visible {
+  outline:3px solid #c9a35a;
+  outline-offset:3px;
+}
+@media(max-width:370px) {
+  .card { padding:17px; }
+  h1 { font-size:22px; }
+  .month { max-width:150px; }
+  .entry { flex-wrap:wrap; }
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <div class="tag">ふたりで、ちょうどよく。</div>
+      <h1>ふたりの家計</h1>
+    </div>
+    <label class="month">
+      表示する月
+      <input id="month" type="month" required>
+    </label>
+  </header>
+
+  <p id="bookError" class="notice" hidden></p>
+
+  <div id="installGuide" class="notice" style="margin-top:16px" hidden>
+    <strong>ホーム画面に追加してから使ってください</strong><br>
+    Safari下部の共有ボタン（□に↑）→「ホーム画面に追加」→「追加」。<br>
+    以後はホーム画面のアイコンから開きます。
+    Safariで開いた画面とアイコンから開いた画面では、
+    保存されるデータが別々です。
+  </div>
+
+  <nav aria-label="メニュー">
+    <button type="button" data-tab="home" aria-pressed="true">今月</button>
+    <button type="button" data-tab="add" aria-pressed="false">＋ 支出</button>
+    <button type="button" data-tab="assets" aria-pressed="false">財産</button>
+    <button type="button" data-tab="settings" aria-pressed="false">設定・取込</button>
+  </nav>
+
+  <p id="status" class="muted" role="status" aria-live="polite"></p>
+
+  <section id="home">
+    <div class="card hero">
+      <div class="muted">ふたりの生活費</div>
+      <div class="total" id="total">¥0</div>
+      <div class="split">
+        <span id="ratioA"></span>
+        <span id="ratioB"></span>
+      </div>
+      <div class="bar"><span id="ratioBar"></span></div>
+      <div class="split">
+        <span id="burdenA"></span>
+        <span id="burdenB"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>今月の精算</h2>
+      <p id="settlement"></p>
+      <p id="paid" class="muted"></p>
+      <button type="button" id="share" class="lineButton">
+        精算額をLINEで共有
+      </button>
+      <p class="muted">
+        内容を確認してから、LINEで相手を選んで送信します。
+        自動通知ではありません。
+      </p>
+      <div id="sharePreview" hidden>
+        <label>
+          共有する内容
+          <textarea id="shareText" rows="7" readonly></textarea>
+        </label>
+        <a id="lineLink" class="button lineButton"
+           target="_blank" rel="noopener noreferrer">LINEを開く</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>この月の子ども費</h2>
+      <div id="childBreakdown"></div>
+      <p class="muted">
+        教育資金の積立は財産台帳で管理できます。
+        積立への振替と、実際に使った支出を二重に計上しないでください。
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>支出の記録</h2>
+      <div id="entries"></div>
+    </div>
+  </section>
+
+  <section id="add" hidden>
+    <form id="expenseForm" class="card">
+      <h2>支出を追加</h2>
+      <label>
+        日付
+        <input id="date" type="date" required>
+      </label>
+      <label>
+        金額（円）
+        <input id="amount" type="number" inputmode="numeric"
+               min="1" max="100000000" step="1"
+               placeholder="例：3200" required>
+      </label>
+      <div class="grid">
+        <label>
+          項目
+          <select id="category"></select>
+        </label>
+        <label>
+          支払った人
+          <select id="payer">
+            <option value="a">あなた</option>
+            <option value="b">パートナー</option>
+          </select>
+        </label>
+      </div>
+      <label>
+        メモ（任意）
+        <input id="memo" maxlength="80" placeholder="例：週末の買い出し">
+      </label>
+      <label class="check">
+        <input id="shared" type="checkbox" checked>
+        ふたりの生活費として分担する
+      </label>
+      <p class="muted">
+        チェックを外した個人の支出は、生活費合計と精算から除外します。
+      </p>
+      <button id="saveExpense">保存する</button>
+    </form>
+  </section>
+
+  <section id="settings" hidden>
+    <form id="settingsForm" class="card">
+      <h2>この月の収入と分担</h2>
+      <p class="muted">
+        設定は月ごとに保存します。過去の月の割合は変わりません。
+      </p>
+      <div class="grid">
+        <label>
+          1人目の名前
+          <input id="nameA" maxlength="20" required>
+        </label>
+        <label>
+          2人目の名前
+          <input id="nameB" maxlength="20" required>
+        </label>
+      </div>
+      <div class="grid">
+        <label>
+          1人目の手取り（円）
+          <input id="incomeA" type="number" inputmode="numeric"
+                 min="0" max="100000000" step="1" required>
+        </label>
+        <label>
+          2人目の手取り（円）
+          <input id="incomeB" type="number" inputmode="numeric"
+                 min="0" max="100000000" step="1" required>
+        </label>
+      </div>
+      <label>
+        分担方法
+        <select id="mode">
+          <option value="income">手取り収入の割合で分ける</option>
+          <option value="equal">半分ずつ分ける</option>
+        </select>
+      </label>
+      <p class="muted">
+        1人目の負担額を円単位に四捨五入し、残額を2人目に割り当てます。
+      </p>
+      <button id="saveSettings">この月の設定を保存</button>
+    </form>
+
+    <div class="card">
+      <h2>Excel・CSVから取り込む</h2>
+      <p class="muted">
+        必須列：日付・金額・支払者<br>
+        任意列：項目・メモ・対象<br>
+        支払者：A＝1人目、B＝2人目<br>
+        対象：生活費 または 個人。空欄は生活費です。<br>
+        日付：2026-10-01 のように入力してください。<br>
+        Excelは先頭シート、CSVはUTF-8形式に対応します。
+      </p>
+      <button type="button" id="downloadTemplate" class="secondary">
+        CSVひな形を保存
+      </button>
+      <label style="margin-top:16px">
+        ファイルを選ぶ（5MB・5000行以内）
+        <input id="importFile" type="file" accept=".xlsx,.csv">
+      </label>
+      <p id="importMessage" class="muted" role="status"></p>
+      <div id="importPreview" class="scroll"></div>
+      <button type="button" id="commitImport" disabled>
+        確認して取り込む
+      </button>
+      <p class="muted">
+        同じ日付・金額・支払者・項目・メモ・対象の行は、
+        重複候補として除外します。
+        別の支出でも一致する場合があるため、一覧を確認してください。
+      </p>
+      <p class="muted">
+        ファイルはiPhone内で読み取り、外部には送信しません。
+        初回だけ読み取りライブラリの取得に通信が必要です。
+        銀行・カード会社ごとの独自形式には未対応です。
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>家計データの書き出し</h2>
+      <button type="button" id="exportBook" class="secondary">
+        全月の家計データを書き出す（JSON）
+      </button>
+      <p class="muted">
+        共有メニューから「"ファイル"に保存」を選ぶと、
+        iCloud Driveなどに保管できます。
+        JSONの復元画面は未実装です。
+        財産台帳は「財産」画面から別に書き出せます。
+      </p>
+    </div>
+  </section>
+
+  <section id="assets" hidden>
+    <div class="card">
+      <h2>財産台帳</h2>
+      <p class="muted">
+        月をまたいで管理します。上部の表示月には連動せず、
+        生活費の精算にも含めません。
+        同じ財産は1件として登録し、金額が変わったら修正してください。
+      </p>
+      <p class="notice">
+        分類は整理用です。名義や分類だけで、所有関係や
+        離婚時の財産分与の扱いが決まるわけではありません。
+        資金が混ざっている場合は「混在・未確認」を選び、
+        お金の出どころを記録してください。
+      </p>
+      <p id="assetError" class="notice" hidden></p>
+      <p id="assetStatus" class="muted" role="status"></p>
+      <button type="button" id="exportAssets" class="secondary">
+        台帳と変更履歴を書き出す（JSON）
+      </button>
+    </div>
+
+    <form id="assetForm" class="card">
+      <h2 id="assetFormTitle">財産を登録</h2>
+      <label>
+        財産の名前
+        <input id="assetTitle" maxlength="80"
+               placeholder="例：結婚前からの定期預金" required>
+      </label>
+      <label>
+        管理上の分類
+        <select id="assetKind"></select>
+      </label>
+      <label>
+        名義・現在の保有者
+        <input id="assetHolder" maxlength="80"
+               placeholder="氏名。不明なら「未確認」" required>
+      </label>
+      <label>
+        関係する子ども（任意）
+        <input id="assetChild" maxlength="80" placeholder="例：長女">
+      </label>
+      <label>
+        現在の残高・評価額（円）
+        <input id="assetAmount" type="number" inputmode="numeric"
+               min="0" max="1000000000000" step="1" required>
+      </label>
+      <div class="grid">
+        <label>
+          金額の確認日
+          <input id="assetAsOf" type="date" required>
+        </label>
+        <label>
+          取得日（不明なら空欄）
+          <input id="assetAcquired" type="date">
+        </label>
+      </div>
+      <label>
+        資金の出どころ・経緯
+        <textarea id="assetSource" rows="3" maxlength="2000"
+          placeholder="例：婚前の給与から100万円。結婚後の入金なし。"
+          required></textarea>
+      </label>
+      <label>
+        根拠資料のメモ（任意）
+        <textarea id="assetEvidence" rows="3" maxlength="2000"
+          placeholder="例：通帳写しの日付、贈与の記録、保管場所"></textarea>
+      </label>
+      <p class="muted">
+        資料ファイル自体は添付・保存されません。別途保管してください。
+      </p>
+      <label>
+        補足・修正理由（任意）
+        <textarea id="assetNote" rows="2" maxlength="2000"
+          placeholder="例：婚前資金と婚姻後の入金が混在。内訳を確認中。"></textarea>
+      </label>
+      <button id="saveAsset">財産を保存</button>
+      <button type="button" id="cancelAsset" class="secondary"
+              style="margin-top:10px" hidden>修正をやめる</button>
+    </form>
+
+    <div class="card">
+      <h2>登録した財産</h2>
+      <div id="assetList"></div>
+    </div>
+
+    <details class="card">
+      <summary>保管済みの記録</summary>
+      <p class="muted">
+        解約・売却などで現在の一覧から外した記録です。履歴は残ります。
+      </p>
+      <div id="archivedAssetList"></div>
+    </details>
+
+    <p class="muted">
+      変更履歴は法的な証明や改ざん防止を保証するものではありません。
+      JSONの復元画面は未実装です。
+    </p>
+  </section>
+
+  <footer class="muted">
+    試作版／データはこのiPhoneの中だけに保存されます。<br>
+    端末間の同期・ログイン制限はありません。<br>
+    アプリの削除や機種変更で記録が消えるため、
+    月1回は書き出して保管してください。
+  </footer>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  const $ = id => document.getElementById(id);
+  const yen = n => "¥" + n.toLocaleString("ja-JP");
+
+  const childCategories = [
+    "子ども：保育園・学校",
+    "子ども：習い事",
+    "子ども：医療費",
+    "子ども：衣服・日用品",
+    "子ども：食費",
+    "子ども：レジャー",
+    "子ども：その他"
+  ];
+  const categories = [
+    "食費","日用品","住居費","光熱費","通信費",
+    "交通費","お出かけ","子ども",...childCategories,"その他"
+  ];
+  const kinds = [
+    "夫婦で形成した財産の候補",
+    "1人目の特有財産の候補",
+    "2人目の特有財産の候補",
+    "子ども本人の財産として管理",
+    "親が確保した子ども用資金",
+    "混在・未確認"
+  ];
+
+  categories.forEach(name => $("category").add(new Option(name,name)));
+  kinds.forEach(name => $("assetKind").add(new Option(name,name)));
+
+  // ---------- ホーム画面アプリとしての設定 ----------
+
+  const standalone =
+    navigator.standalone===true ||
+    window.matchMedia("(display-mode: standalone)").matches;
+
+  // Safariで開いている間は、ホーム画面への追加を案内する。
+  $("installGuide").hidden = standalone;
+
+  // 端末の空き容量が少ないときに、保存データを消されにくくする。
+  if (standalone && navigator.storage?.persist) {
+    navigator.storage.persist().catch(()=>{});
+  }
+
+  // 電波がない場所でも起動できるようにする（https配信時のみ有効）。
+  if ("serviceWorker" in navigator && window.isSecureContext) {
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  }
+
+  function localToday() {
+    const d = new Date();
+    return [
+      d.getFullYear(),
+      String(d.getMonth()+1).padStart(2,"0"),
+      String(d.getDate()).padStart(2,"0")
+    ].join("-");
+  }
+
+  function element(tag, text, className) {
+    const node = document.createElement(tag);
+    if (text !== undefined) node.textContent = text;
+    if (className) node.className = className;
+    return node;
+  }
+
+  function isDate(s, optional=false) {
+    if (optional && s==="") return true;
+    if (typeof s!=="string" ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+    const d = new Date(s+"T00:00:00Z");
+    return !Number.isNaN(d.getTime()) &&
+      d.toISOString().slice(0,10)===s;
+  }
+
+  function validMoney(n) {
+    return Number.isInteger(n) && n>=0 && n<=100000000;
+  }
+
+  function blankMonth() {
+    return {
+      a:"あなた",b:"パートナー",
+      ia:0,ib:0,mode:"income",rows:[]
+    };
+  }
+
+  function validateBook(data) {
+    if (!data || !data.months ||
+        typeof data.months!=="object" ||
+        Array.isArray(data.months)) {
+      throw Error("家計データの形式が不正です");
+    }
+    for (const [key,m] of Object.entries(data.months)) {
+      if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(key) ||
+          !m || !Array.isArray(m.rows) ||
+          m.rows.length>10000 ||
+          typeof m.a!=="string" || !m.a.trim() ||
+          m.a.length>20 ||
+          typeof m.b!=="string" || !m.b.trim() ||
+          m.b.length>20 ||
+          !validMoney(m.ia) || !validMoney(m.ib) ||
+          !["income","equal"].includes(m.mode)) {
+        throw Error("月別データの形式・件数が不正です");
+      }
+      for (const r of m.rows) {
+        if (!r || !isDate(r.date) ||
+            r.date.slice(0,7)!==key ||
+            !validMoney(r.amount) || r.amount===0 ||
+            !["a","b"].includes(r.payer) ||
+            typeof r.shared!=="boolean" ||
+            typeof r.category!=="string" ||
+            !r.category.trim() || r.category.length>30 ||
+            typeof r.memo!=="string" || r.memo.length>80) {
+          throw Error("支出データの形式が不正です");
+        }
+      }
+    }
+  }
+
+  function validAsset(r) {
+    return r && typeof r.id==="string" && r.id.length>0 &&
+      kinds.includes(r.kind) &&
+      Number.isSafeInteger(r.amount) &&
+      r.amount>=0 && r.amount<=1000000000000 &&
+      ["title","holder","child","source","evidence","note"]
+        .every(k => typeof r[k]==="string" && r[k].length<=2000) &&
+      r.title.trim().length>0 &&
+      r.holder.trim().length>0 &&
+      r.source.trim().length>0 &&
+      isDate(r.acquired,true) && isDate(r.asof) &&
+      typeof r.savedAt==="string" &&
+      !Number.isNaN(Date.parse(r.savedAt)) &&
+      typeof r.archived==="boolean";
+  }
+
+  function validateAssets(data) {
+    if (!data || data.version!==1 ||
+        !Array.isArray(data.events) ||
+        data.events.length>10000 ||
+        !data.events.every(validAsset)) {
+      throw Error("財産台帳の形式・履歴件数が不正です");
+    }
+  }
+
+  // 以前の試作版と同じ保存キーを使用する。
+  function createStore(key, fallback, validator, errorId) {
+    const store = {
+      value:fallback,
+      raw:null,
+      blocked:false
+    };
+    try {
+      store.raw = localStorage.getItem(key);
+      if (store.raw!==null) {
+        const parsed = JSON.parse(store.raw);
+        validator(parsed);
+        store.value = parsed;
+      }
+    } catch {
+      store.blocked = true;
+      $(errorId).hidden = false;
+      $(errorId).textContent =
+        "保存データを読み込めません。既存データ保護のため、" +
+        "このデータへの書き込みを停止しています。";
+    }
+
+    store.put = next => {
+      if (store.blocked) {
+        alert("保存が利用できません。上部の案内を確認してください。");
+        return false;
+      }
+      try {
+        // 別タブからの更新を上書きしない。
+        if (localStorage.getItem(key)!==store.raw) {
+          alert(
+            "別の画面でデータが更新されています。" +
+            "入力内容を控えてから、この画面を再読み込みしてください。"
+          );
+          return false;
+        }
+        validator(next);
+        const raw = JSON.stringify(next);
+        localStorage.setItem(key,raw);
+        store.raw = raw;
+        store.value = next;
+        return true;
+      } catch (error) {
+        alert(
+          "保存できませんでした。\n" +
+          error.message +
+          "\n空き容量・ブラウザ設定・件数上限を確認してください。" +
+          "今回の変更は保存していません。"
+        );
+        return false;
+      }
+    };
+    return store;
+  }
+
+  const book = createStore(
+    "futari-household-v1",
+    {months:{}},
+    validateBook,
+    "bookError"
+  );
+  const assets = createStore(
+    "futari-assets-v1",
+    {version:1,events:[]},
+    validateAssets,
+    "assetError"
+  );
+
+  $("month").value = localToday().slice(0,7);
+  $("saveExpense").disabled = book.blocked;
+  $("saveSettings").disabled = book.blocked;
+  $("importFile").disabled = book.blocked;
+  $("exportBook").disabled = book.blocked;
+  $("saveAsset").disabled = assets.blocked;
+  $("exportAssets").disabled = assets.blocked;
+
+  function currentMonth() {
+    return book.value.months[$("month").value] || blankMonth();
+  }
+
+  function saveMonth(key,m) {
+    return book.put({
+      months:{...book.value.months,[key]:m}
+    });
+  }
+
+  function calculate(m) {
+    const rows = m.rows.filter(r=>r.shared);
+    const total = rows.reduce((sum,r)=>sum+r.amount,0);
+    const paidA = rows.filter(r=>r.payer==="a")
+      .reduce((sum,r)=>sum+r.amount,0);
+    const denominator = m.mode==="equal" ? 2 : m.ia+m.ib;
+    const numerator = m.mode==="equal" ? 1 : m.ia;
+
+    // 整数計算で円単位に四捨五入する。
+    const burdenA = denominator===0 ? null : Number(
+      (
+        BigInt(total)*BigInt(numerator) +
+        BigInt(Math.floor(denominator/2))
+      ) / BigInt(denominator)
+    );
+
+    return {
+      total,paidA,
+      ratio:denominator===0 ? null : numerator/denominator,
+      burdenA,
+      burdenB:burdenA===null ? null : total-burdenA,
+      transfer:burdenA===null ? null : paidA-burdenA
+    };
+  }
+
+  function settlement(m,c) {
+    if (c.transfer===null) {
+      return "設定で手取り収入を登録してください";
+    }
+    if (c.total===0) {
+      return "生活費を登録すると精算額が分かります";
+    }
+    if (c.transfer===0) {
+      return "ふたりの負担はぴったり。送金は不要です";
+    }
+    return c.transfer>0
+      ? `${m.b} → ${m.a} に ${yen(c.transfer)}`
+      : `${m.a} → ${m.b} に ${yen(-c.transfer)}`;
+  }
+
+  function tab(id) {
+    for (const name of ["home","add","settings","assets"]) {
+      $(name).hidden = name!==id;
+    }
+    document.querySelectorAll("[data-tab]").forEach(button=>{
+      button.setAttribute(
+        "aria-pressed",
+        String(button.dataset.tab===id)
+      );
+    });
+  }
+
+  document.querySelectorAll("[data-tab]").forEach(button=>{
+    button.onclick = ()=>tab(button.dataset.tab);
+  });
+
+  function resetExpenseDate() {
+    const key = $("month").value;
+    const today = localToday();
+    $("date").value = key===today.slice(0,7) ? today : key+"-01";
+  }
+
+  function renderChildren(m) {
+    const container = $("childBreakdown");
+    container.replaceChildren();
+
+    const rows = m.rows.filter(r =>
+      r.category==="子ども" || childCategories.includes(r.category)
+    );
+    if (!rows.length) {
+      container.append(element(
+        "p","まだ記録がありません。","muted"
+      ));
+      return;
+    }
+    for (const category of ["子ども",...childCategories]) {
+      const items = rows.filter(r=>r.category===category);
+      if (!items.length) continue;
+      const sharedTotal = items.filter(r=>r.shared)
+        .reduce((sum,r)=>sum+r.amount,0);
+      const personalTotal = items.filter(r=>!r.shared)
+        .reduce((sum,r)=>sum+r.amount,0);
+      const row = element("div",undefined,"entry");
+      const detail = element("div",undefined,"detail");
+      detail.append(
+        element("strong",category),
+        element("small",
+          `分担対象 ${yen(sharedTotal)} ／ 個人負担 ${yen(personalTotal)}`)
+      );
+      row.append(detail);
+      container.append(row);
+    }
+  }
+
+  function renderBook() {
+    const m = currentMonth();
+    const c = calculate(m);
+
+    $("total").textContent = yen(c.total);
+    $("ratioA").textContent = m.a+" "+
+      (c.ratio===null ? "未設定" : (c.ratio*100).toFixed(1)+"%");
+    $("ratioB").textContent = m.b+" "+
+      (c.ratio===null ? "未設定" : ((1-c.ratio)*100).toFixed(1)+"%");
+    $("ratioBar").style.width =
+      `${c.ratio===null ? 0 : c.ratio*100}%`;
+    $("burdenA").textContent =
+      "負担 "+(c.burdenA===null ? "—" : yen(c.burdenA));
+    $("burdenB").textContent =
+      "負担 "+(c.burdenB===null ? "—" : yen(c.burdenB));
+    $("settlement").textContent = settlement(m,c);
+    $("paid").textContent =
+      `生活費の支払済み：${m.a} ${yen(c.paidA)} ／ `+
+      `${m.b} ${yen(c.total-c.paidA)}`;
+    $("share").disabled = c.transfer===null || c.total===0;
+    $("sharePreview").hidden = true;
+
+    $("nameA").value = m.a;
+    $("nameB").value = m.b;
+    $("incomeA").value = m.ia;
+    $("incomeB").value = m.ib;
+    $("mode").value = m.mode;
+    $("payer").options[0].textContent = m.a;
+    $("payer").options[1].textContent = m.b;
+
+    $("entries").replaceChildren();
+    if (!m.rows.length) {
+      $("entries").append(element(
+        "p","「＋ 支出」から最初の1件を追加しましょう。","muted"
+      ));
+    }
+
+    m.rows.map((r,index)=>({r,index}))
+      .sort((x,y)=>
+        y.r.date.localeCompare(x.r.date) || y.index-x.index
+      )
+      .forEach(({r,index})=>{
+        const row = element("div",undefined,"entry");
+        const detail = element("div",undefined,"detail");
+        detail.append(
+          element("strong",
+            r.category+(r.memo ? " · "+r.memo : "")),
+          element("small",
+            `${r.date.slice(5)} · ${m[r.payer]} · `+
+            (r.shared ? "生活費" : "個人の支出"))
+        );
+
+        const remove = element(
+          "button","削除","remove danger"
+        );
+        remove.type = "button";
+        remove.disabled = book.blocked;
+        remove.setAttribute(
+          "aria-label",
+          `${r.date}の${r.category} ${yen(r.amount)}を削除`
+        );
+        remove.onclick = ()=>{
+          if (!confirm(
+            `${r.category} ${yen(r.amount)}の記録を削除しますか？`
+          )) return;
+          const updated = {
+            ...m,
+            rows:m.rows.filter((_,i)=>i!==index)
+          };
+          if (saveMonth($("month").value,updated)) {
+            renderBook();
+            $("status").textContent = "支出を削除しました。";
+          }
+        };
+
+        row.append(
+          detail,
+          element("span",yen(r.amount),"money"),
+          remove
+        );
+        $("entries").append(row);
+      });
+
+    renderChildren(m);
+  }
+
+  $("month").onchange = ()=>{
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test($("month").value)) {
+      $("month").value = localToday().slice(0,7);
+    }
+    resetExpenseDate();
+    $("status").textContent = "";
+    renderBook();
+  };
+
+  $("settingsForm").onsubmit = event=>{
+    event.preventDefault();
+
+    const a = $("nameA").value.trim();
+    const b = $("nameB").value.trim();
+    const ia = Number($("incomeA").value);
+    const ib = Number($("incomeB").value);
+    const mode = $("mode").value;
+
+    if (!a || !b || a===b) {
+      alert("区別できるように異なる名前を入力してください。");
+      return;
+    }
+    if (!validMoney(ia) || !validMoney(ib)) {
+      alert("手取りは0以上の整数で入力してください。");
+      return;
+    }
+    if (mode==="income" && ia+ib===0) {
+      alert(
+        "収入に応じて分けるには、どちらかの収入を入力してください。" +
+        "収入がない月は折半を選べます。"
+      );
+      return;
+    }
+
+    if (saveMonth($("month").value,{
+      ...currentMonth(),a,b,ia,ib,mode
+    })) {
+      renderBook();
+      tab("home");
+      $("status").textContent = "この月の設定を保存しました。";
+    }
+  };
+
+  $("expenseForm").onsubmit = event=>{
+    event.preventDefault();
+
+    const date = $("date").value;
+    const key = $("month").value;
+    const amount = Number($("amount").value);
+
+    if (!isDate(date) || date.slice(0,7)!==key) {
+      alert(
+        "表示している月の日付を選んでください。" +
+        "別の月の支出は上部で月を切り替えて登録できます。"
+      );
+      return;
+    }
+    if (!validMoney(amount) || amount===0) {
+      alert("金額は1円以上の整数で入力してください。");
+      return;
+    }
+
+    const m = currentMonth();
+    if (m.rows.length>=10000) {
+      alert("この月の登録上限（1万件）に達しました。");
+      return;
+    }
+
+    const record = {
+      date,amount,
+      category:$("category").value,
+      payer:$("payer").value,
+      memo:$("memo").value.trim(),
+      shared:$("shared").checked
+    };
+
+    if (saveMonth(key,{...m,rows:[...m.rows,record]})) {
+      $("amount").value = "";
+      $("memo").value = "";
+      renderBook();
+      tab("home");
+      $("status").textContent = "支出を保存しました。";
+    }
+  };
+
+  $("share").onclick = ()=>{
+    const m = currentMonth();
+    const c = calculate(m);
+    if (c.transfer===null || c.total===0) return;
+
+    const text = [
+      `【ふたりの家計｜${$("month").value}】`,
+      `生活費合計：${yen(c.total)}`,
+      `${m.a}の負担：${yen(c.burdenA)}`,
+      `${m.b}の負担：${yen(c.burdenB)}`,
+      `精算：${settlement(m,c)}`,
+      "※現在の登録内容に基づく精算額です。"
+    ].join("\n");
+
+    $("shareText").value = text;
+    $("lineLink").href =
+      "https://line.me/R/share?text="+encodeURIComponent(text);
+    $("sharePreview").hidden = false;
+  };
+
+  // ホーム画面アプリではダウンロードが不安定なため、
+  // 使える場合はiPhoneの共有メニュー（"ファイル"に保存）を使う。
+  async function downloadFile(contents,type,filename) {
+    const file = new File([contents],filename,{type:type.split(";")[0]});
+    if (navigator.canShare?.({files:[file]})) {
+      try {
+        await navigator.share({files:[file]});
+        return;
+      } catch (error) {
+        if (error.name==="AbortError") return;
+      }
+    }
+
+    const url = URL.createObjectURL(new Blob([contents],{type}));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),30000);
+  }
+
+  $("exportBook").onclick = ()=>{
+    downloadFile(
+      JSON.stringify({
+        ...book.value,
+        exportedAt:new Date().toISOString()
+      },null,2),
+      "application/json;charset=utf-8",
+      "ふたりの家計_全月.json"
+    );
+  };
+
+  // ---------- Excel・CSV取り込み ----------
+
+  let pendingImport = [];
+  let libraryPromise = null;
+  let readingFile = false;
+
+  function loadSpreadsheetLibrary() {
+    if (window.XLSX) return Promise.resolve(window.XLSX);
+    if (!libraryPromise) {
+      libraryPromise = new Promise((resolve,reject)=>{
+        const script = document.createElement("script");
+        script.src =
+          "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js";
+        script.onload = ()=>{
+          if (window.XLSX) resolve(window.XLSX);
+          else {
+            libraryPromise = null;
+            reject(Error("読み取り機能を初期化できませんでした。"));
+          }
+        };
+        script.onerror = ()=>{
+          script.remove();
+          libraryPromise = null;
+          reject(Error(
+            "読み取り機能を取得できません。通信状態を確認してください。"
+          ));
+        };
+        document.head.append(script);
+      });
+    }
+    return libraryPromise;
+  }
+
+  function normalizeDate(v) {
+    if (v instanceof Date && !Number.isNaN(v.getTime())) {
+      v = `${v.getFullYear()}-${v.getMonth()+1}-${v.getDate()}`;
+    }
+    const a = String(v??"").trim()
+      .match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+    if (!a) {
+      throw Error("日付は YYYY-MM-DD 形式にしてください");
+    }
+    const s =
+      `${a[1]}-${a[2].padStart(2,"0")}-${a[3].padStart(2,"0")}`;
+    if (!isDate(s)) throw Error("日付が不正です");
+    return s;
+  }
+
+  function importAmount(v) {
+    const s = String(v??"").trim().replace(/[¥￥,\s]/g,"");
+    if (!/^\d+$/.test(s)) {
+      throw Error("金額は正の整数にしてください");
+    }
+    const n = Number(s);
+    if (!Number.isInteger(n) || n<1 || n>100000000) {
+      throw Error("金額が範囲外です");
+    }
+    return n;
+  }
+
+  function fingerprint(r) {
+    return JSON.stringify([
+      r.date,r.amount,r.payer,r.category,r.memo,r.shared
+    ]);
+  }
+
+  function planImport() {
+    const seen = new Set();
+    for (const m of Object.values(book.value.months)) {
+      m.rows.forEach(r=>seen.add(fingerprint(r)));
+    }
+    const accepted = [];
+    let duplicates = 0;
+    for (const r of pendingImport) {
+      const key = fingerprint(r);
+      if (seen.has(key)) {
+        duplicates++;
+      } else {
+        seen.add(key);
+        accepted.push(r);
+      }
+    }
+    return {accepted,duplicates};
+  }
+
+  $("downloadTemplate").onclick = ()=>{
+    downloadFile(
+      "﻿日付,金額,支払者,項目,メモ,対象\r\n",
+      "text/csv;charset=utf-8",
+      "ふたりの家計_取り込み用.csv"
+    );
+  };
+
+  $("importFile").onchange = async ()=>{
+    if (readingFile) return;
+    pendingImport = [];
+    $("importPreview").replaceChildren();
+    $("commitImport").disabled = true;
+    $("importMessage").textContent = "";
+
+    const file = $("importFile").files[0];
+    if (!file) return;
+
+    readingFile = true;
+    $("importFile").disabled = true;
+    $("importMessage").textContent = "読み取り中…";
+
+    try {
+      if (book.blocked) throw Error("ブラウザへの保存が利用できません。");
+      if (!/\.(xlsx|csv)$/i.test(file.name)) {
+        throw Error(".xlsx または .csv を選んでください。");
+      }
+      if (file.size>5*1024*1024) {
+        throw Error("5MB以下のファイルを選んでください。");
+      }
+
+      const XLSX = await loadSpreadsheetLibrary();
+      const bytes = await file.arrayBuffer();
+      let workbook;
+
+      if (/\.csv$/i.test(file.name)) {
+        let text;
+        try {
+          text = new TextDecoder("utf-8",{fatal:true}).decode(bytes);
+        } catch {
+          throw Error(
+            "Excelで「CSV UTF-8」形式に保存し直してください。"
+          );
+        }
+        workbook = XLSX.read(text.replace(/^﻿/,""),{
+          type:"string",raw:true
+        });
+      } else {
+        workbook = XLSX.read(bytes,{
+          type:"array",cellDates:true
+        });
+      }
+
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      if (!sheet || !sheet["!ref"]) {
+        throw Error("データがありません。");
+      }
+      const range = XLSX.utils.decode_range(sheet["!ref"]);
+      if (range.e.r-range.s.r>5000 ||
+          range.e.c-range.s.c>30) {
+        throw Error("1回5000行・31列以内に分けてください。");
+      }
+
+      const rows = XLSX.utils.sheet_to_json(sheet,{
+        header:1,defval:"",raw:true,blankrows:true
+      });
+      if (!rows.length) throw Error("見出し行がありません。");
+
+      const headers = rows.shift().map(v=>String(v).trim());
+      const required = ["日付","金額","支払者"];
+      const supported = [...required,"項目","メモ","対象"];
+
+      for (const name of required) {
+        if (!headers.includes(name)) {
+          throw Error(`「${name}」列が見つかりません。`);
+        }
+      }
+      for (const name of supported) {
+        if (headers.filter(h=>h===name).length>1) {
+          throw Error(`「${name}」列が重複しています。`);
+        }
+      }
+
+      const parsed = [];
+      rows.forEach((cells,i)=>{
+        if (cells.every(v=>String(v).trim()==="")) return;
+
+        const get = name=>{
+          const index = headers.indexOf(name);
+          return index<0 ? "" : cells[index]??"";
+        };
+
+        try {
+          // 数式の保存済み計算結果は古い可能性があるため除外する。
+          headers.forEach((name,column)=>{
+            if (!supported.includes(name)) return;
+            const address = XLSX.utils.encode_cell({
+              r:range.s.r+i+1,
+              c:range.s.c+column
+            });
+            if (sheet[address]?.f) {
+              throw Error("数式セルは値として貼り付け直してください");
+            }
+          });
+
+          const payer = String(get("支払者")).trim().toUpperCase();
+          if (!["A","B"].includes(payer)) {
+            throw Error("支払者は A または B にしてください");
+          }
+          const target = String(get("対象")).trim() || "生活費";
+          if (!["生活費","個人"].includes(target)) {
+            throw Error("対象は「生活費」または「個人」にしてください");
+          }
+
+          const memo = String(get("メモ")).trim();
+          const category = String(get("項目")).trim() || "その他";
+          if (memo.length>80 || category.length>30) {
+            throw Error("メモは80文字、項目は30文字以内にしてください");
+          }
+
+          parsed.push({
+            date:normalizeDate(get("日付")),
+            amount:importAmount(get("金額")),
+            payer:payer.toLowerCase(),
+            category,memo,
+            shared:target==="生活費"
+          });
+        } catch (error) {
+          throw Error(`${range.s.r+i+2}行目：${error.message}`);
+        }
+      });
+
+      if (!parsed.length) {
+        throw Error("取り込める明細がありません。");
+      }
+      pendingImport = parsed;
+
+      const {accepted,duplicates} = planImport();
+      const total = accepted.reduce((sum,r)=>sum+r.amount,0);
+      $("importMessage").textContent =
+        `追加予定 ${accepted.length}件・合計 ${yen(total)}`+
+        `（個人支出を含む）。重複候補 ${duplicates}件は除外します。`+
+        "まだ保存していません。";
+
+      accepted.forEach(r=>{
+        const m = book.value.months[r.date.slice(0,7)] || blankMonth();
+        const row = element("div",undefined,"entry");
+        const detail = element("div",undefined,"detail");
+        detail.append(
+          element("strong",`${r.category} · ${yen(r.amount)}`),
+          element("small",
+            `${r.date} · ${m[r.payer]} · ${r.shared ? "生活費" : "個人"}`),
+          element("small",r.memo)
+        );
+        row.append(detail);
+        $("importPreview").append(row);
+      });
+      $("commitImport").disabled = accepted.length===0;
+    } catch (error) {
+      pendingImport = [];
+      $("importPreview").replaceChildren();
+      $("importMessage").textContent =
+        `${error.message} データは保存していません。`;
+    } finally {
+      readingFile = false;
+      $("importFile").disabled = book.blocked;
+    }
+  };
+
+  $("commitImport").onclick = ()=>{
+    if (book.blocked || readingFile) return;
+
+    // プレビュー後の追加・削除も含めて再計算する。
+    const {accepted,duplicates} = planImport();
+    if (!accepted.length) {
+      $("importMessage").textContent = "追加対象がありません。";
+      $("commitImport").disabled = true;
+      return;
+    }
+
+    const total = accepted.reduce((sum,r)=>sum+r.amount,0);
+    if (!confirm(
+      `${accepted.length}件・合計${yen(total)}を保存します。\n`+
+      `重複候補${duplicates}件は除外します。\n`+
+      "同額・同内容の別の支出が除外されていないか確認してください。"
+    )) return;
+
+    const next = JSON.parse(JSON.stringify(book.value));
+    const months = new Set();
+
+    accepted.forEach(r=>{
+      const key = r.date.slice(0,7);
+      months.add(key);
+      if (!next.months[key]) next.months[key] = blankMonth();
+      next.months[key].rows.push(r);
+    });
+
+    // 全件をまとめて保存。途中の一部だけは保存しない。
+    if (book.put(next)) {
+      const keys = [...months].sort();
+      $("month").value = keys[keys.length-1];
+      pendingImport = [];
+      $("importFile").value = "";
+      $("importPreview").replaceChildren();
+      $("commitImport").disabled = true;
+      $("importMessage").textContent =
+        `${accepted.length}件を保存しました。`;
+      resetExpenseDate();
+      renderBook();
+      tab("home");
+      $("status").textContent =
+        `${months.size}か月分・${accepted.length}件を取り込みました。`+
+        "初めて登録した月は、設定で収入と名前を登録してください。";
+    }
+  };
+
+  // ---------- 財産台帳 ----------
+
+  let editingAssetId = null;
+
+  const assetFields = {
+    title:"assetTitle",
+    kind:"assetKind",
+    holder:"assetHolder",
+    child:"assetChild",
+    amount:"assetAmount",
+    asof:"assetAsOf",
+    acquired:"assetAcquired",
+    source:"assetSource",
+    evidence:"assetEvidence",
+    note:"assetNote"
+  };
+
+  function latestAssets(events) {
+    const map = new Map();
+    events.forEach(r=>map.set(r.id,r));
+    return [...map.values()];
+  }
+
+  function saveAssetRecord(record) {
+    if (assets.blocked) return false;
+    if (!validAsset(record)) {
+      alert("必須項目・金額・日付を確認してください。");
+      return false;
+    }
+    if (assets.value.events.length>=10000) {
+      alert("履歴の保存上限（1万件）に達しました。台帳を書き出してください。");
+      return false;
+    }
+    return assets.put({
+      version:1,
+      events:[...assets.value.events,record]
+    });
+  }
+
+  function resetAssetForm() {
+    editingAssetId = null;
+    $("assetForm").reset();
+    $("assetKind").value = "混在・未確認";
+    $("assetAsOf").value = localToday();
+    $("assetFormTitle").textContent = "財産を登録";
+    $("saveAsset").textContent = "財産を保存";
+    $("cancelAsset").hidden = true;
+  }
+
+  function editAsset(r) {
+    editingAssetId = r.id;
+    for (const [key,id] of Object.entries(assetFields)) {
+      $(id).value = r[key];
+    }
+    $("assetFormTitle").textContent = "財産の記録を修正";
+    $("saveAsset").textContent = "変更履歴を残して保存";
+    $("cancelAsset").hidden = false;
+    $("assetForm").scrollIntoView({
+      behavior:"smooth",block:"start"
+    });
+  }
+
+  function appendAssetFacts(container,r) {
+    const lines = [
+      `分類：${r.kind}`,
+      `名義・保有者：${r.holder}`,
+      `関係する子ども：${r.child || "記録なし"}`,
+      `取得日：${r.acquired || "未確認"}`,
+      `評価額：${yen(r.amount)}（確認日 ${r.asof}）`,
+      `資金の出どころ：${r.source}`,
+      `根拠資料：${r.evidence || "記録なし"}`,
+      `補足：${r.note || "記録なし"}`,
+      `状態：${r.archived ? "保管済み" : "現在の一覧に表示"}`
+    ];
+    lines.forEach(line=>{
+      container.append(element("p",line,"muted facts"));
+    });
+  }
+
+  function renderAssets() {
+    $("assetList").replaceChildren();
+    $("archivedAssetList").replaceChildren();
+
+    const latest = latestAssets(assets.value.events).reverse();
+    if (!latest.some(r=>!r.archived)) {
+      $("assetList").append(element(
+        "p","現在の一覧には記録がありません。","muted"
+      ));
+    }
+    if (!latest.some(r=>r.archived)) {
+      $("archivedAssetList").append(element(
+        "p","保管済みの記録はありません。","muted"
+      ));
+    }
+
+    for (const r of latest) {
+      const card = element("div",undefined,"assetRecord");
+      card.append(element("h3",r.title));
+      appendAssetFacts(card,r);
+
+      const actions = element("div",undefined,"grid");
+      const edit = element("button","修正","secondary");
+      edit.type = "button";
+      edit.disabled = assets.blocked;
+      edit.onclick = ()=>editAsset(r);
+
+      const archive = element(
+        "button",
+        r.archived ? "一覧に戻す" : "保管済みにする",
+        "secondary"
+      );
+      archive.type = "button";
+      archive.disabled = assets.blocked;
+      archive.onclick = ()=>{
+        if (!confirm(
+          `${r.title}を${r.archived ? "一覧に戻します" : "保管済みにします"}。`+
+          "履歴は残ります。"
+        )) return;
+
+        if (saveAssetRecord({
+          ...r,
+          archived:!r.archived,
+          savedAt:new Date().toISOString()
+        })) {
+          if (editingAssetId===r.id) resetAssetForm();
+          renderAssets();
+          $("assetStatus").textContent = "台帳を更新しました。";
+        }
+      };
+
+      actions.append(edit,archive);
+      card.append(actions);
+
+      const revisions = assets.value.events.filter(e=>e.id===r.id);
+      const history = element("details");
+      history.style.marginTop = "12px";
+      history.append(element(
+        "summary",`変更履歴（${revisions.length}件）`
+      ));
+
+      revisions.slice().reverse().forEach(e=>{
+        const entry = element("div",undefined,"assetRecord");
+        entry.append(
+          element("strong",
+            new Date(e.savedAt).toLocaleString("ja-JP")),
+          element("p",e.title)
+        );
+        appendAssetFacts(entry,e);
+        history.append(entry);
+      });
+
+      card.append(history);
+      $(r.archived ? "archivedAssetList" : "assetList").append(card);
+    }
+  }
+
+  $("assetForm").onsubmit = event=>{
+    event.preventDefault();
+
+    const previous = editingAssetId
+      ? latestAssets(assets.value.events)
+          .find(r=>r.id===editingAssetId)
+      : null;
+
+    const record = {};
+    for (const [key,id] of Object.entries(assetFields)) {
+      record[key] = key==="amount"
+        ? Number($(id).value)
+        : $(id).value.trim();
+    }
+
+    record.id = editingAssetId || (
+      globalThis.crypto?.randomUUID
+        ? globalThis.crypto.randomUUID()
+        : Date.now()+"-"+Math.random().toString(36).slice(2)
+    );
+    record.archived = previous?.archived ?? false;
+    record.savedAt = new Date().toISOString();
+
+    if (saveAssetRecord(record)) {
+      resetAssetForm();
+      renderAssets();
+      $("assetStatus").textContent =
+        "財産の記録を保存しました。生活費の精算額には含まれません。";
+    }
+  };
+
+  $("cancelAsset").onclick = resetAssetForm;
+
+  $("exportAssets").onclick = ()=>{
+    downloadFile(
+      JSON.stringify({
+        version:1,
+        exportedAt:new Date().toISOString(),
+        description:
+          "ふたりの家計・財産台帳。分類は整理用で法的判定ではありません。",
+        events:assets.value.events
+      },null,2),
+      "application/json;charset=utf-8",
+      "ふたりの家計_財産台帳_履歴付き.json"
+    );
+  };
+
+  resetExpenseDate();
+  resetAssetForm();
+  renderBook();
+  renderAssets();
+})();
+</script>
+</body>
+</html>
