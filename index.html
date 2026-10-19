@@ -95,6 +95,7 @@ input,select,textarea {
   font-size:16px;
 }
 input[type="date"],input[type="month"] { min-height:46px; }
+input[readonly] { background:#F7EFEA; color:var(--muted); }
 textarea { resize:vertical; }
 button,.button {
   display:block;
@@ -372,8 +373,20 @@ button:focus-visible,a:focus-visible,summary:focus-visible {
         <select id="mode">
           <option value="income">手取り収入の割合で分ける</option>
           <option value="equal">半分ずつ分ける</option>
+          <option value="percent">割合（％）を自分で決める</option>
         </select>
       </label>
+      <div id="percentBox" class="grid" hidden>
+        <label>
+          <span id="percentLabelA">1人目</span>の負担（％）
+          <input id="percentA" type="number" inputmode="numeric"
+                 min="0" max="100" step="1" value="50">
+        </label>
+        <label>
+          <span id="percentLabelB">2人目</span>の負担（％）
+          <input id="percentB" type="number" readonly tabindex="-1">
+        </label>
+      </div>
       <p class="muted">
         1人目の負担額を円単位に四捨五入し、残額を2人目に割り当てます。
       </p>
@@ -688,7 +701,9 @@ button:focus-visible,a:focus-visible,summary:focus-visible {
           typeof m.b!=="string" || !m.b.trim() ||
           m.b.length>20 ||
           !validMoney(m.ia) || !validMoney(m.ib) ||
-          !["income","equal"].includes(m.mode)) {
+          !["income","equal","percent"].includes(m.mode) ||
+          (m.mode==="percent" &&
+           (!Number.isInteger(m.pa) || m.pa<0 || m.pa>100))) {
         throw Error("月別データの形式・件数が不正です");
       }
       if (m.fixedDone!==undefined &&
@@ -840,8 +855,8 @@ button:focus-visible,a:focus-visible,summary:focus-visible {
   function inheritedMonth(key,months=book.value.months) {
     const source = settingsSource(key,months);
     if (!source) return blankMonth();
-    const {a,b,ia,ib,mode} = months[source];
-    return {a,b,ia,ib,mode,rows:[]};
+    const {a,b,ia,ib,mode,pa} = months[source];
+    return {a,b,ia,ib,mode,pa,rows:[]};
   }
 
   function currentMonth() {
@@ -861,8 +876,10 @@ button:focus-visible,a:focus-visible,summary:focus-visible {
     const total = rows.reduce((sum,r)=>sum+r.amount,0);
     const paidA = rows.filter(r=>r.payer==="a")
       .reduce((sum,r)=>sum+r.amount,0);
-    const denominator = m.mode==="equal" ? 2 : m.ia+m.ib;
-    const numerator = m.mode==="equal" ? 1 : m.ia;
+    const denominator =
+      m.mode==="equal" ? 2 : m.mode==="percent" ? 100 : m.ia+m.ib;
+    const numerator =
+      m.mode==="equal" ? 1 : m.mode==="percent" ? m.pa : m.ia;
 
     // 整数計算で円単位に四捨五入する。
     const burdenA = denominator===0 ? null : Number(
@@ -977,6 +994,10 @@ button:focus-visible,a:focus-visible,summary:focus-visible {
     $("incomeA").value = m.ia;
     $("incomeB").value = m.ib;
     $("mode").value = m.mode;
+    $("percentA").value = m.pa ?? 50;
+    $("percentLabelA").textContent = m.a;
+    $("percentLabelB").textContent = m.b;
+    updatePercentBox();
     $("payer").options[0].textContent = m.a;
     $("payer").options[1].textContent = m.b;
     $("fixedPayer").options[0].textContent = m.a;
@@ -1208,6 +1229,16 @@ button:focus-visible,a:focus-visible,summary:focus-visible {
     renderBook();
   };
 
+  // ％指定のときだけ入力欄を出し、2人目の割合は残りを自動表示する。
+  function updatePercentBox() {
+    $("percentBox").hidden = $("mode").value!=="percent";
+    const pa = Number($("percentA").value);
+    $("percentB").value =
+      Number.isInteger(pa) && pa>=0 && pa<=100 ? 100-pa : "";
+  }
+  $("mode").onchange = updatePercentBox;
+  $("percentA").oninput = updatePercentBox;
+
   $("settingsForm").onsubmit = event=>{
     event.preventDefault();
 
@@ -1216,6 +1247,7 @@ button:focus-visible,a:focus-visible,summary:focus-visible {
     const ia = Number($("incomeA").value);
     const ib = Number($("incomeB").value);
     const mode = $("mode").value;
+    const pa = Number($("percentA").value);
 
     if (!a || !b || a===b) {
       alert("区別できるように異なる名前を入力してください。");
@@ -1223,6 +1255,11 @@ button:focus-visible,a:focus-visible,summary:focus-visible {
     }
     if (!validMoney(ia) || !validMoney(ib)) {
       alert("手取りは0以上の整数で入力してください。");
+      return;
+    }
+    if (mode==="percent" &&
+        (!Number.isInteger(pa) || pa<0 || pa>100)) {
+      alert("負担の割合は0〜100の整数（％）で入力してください。");
       return;
     }
     if (mode==="income" && ia+ib===0) {
@@ -1234,7 +1271,8 @@ button:focus-visible,a:focus-visible,summary:focus-visible {
     }
 
     if (saveMonth($("month").value,{
-      ...currentMonth(),a,b,ia,ib,mode
+      ...currentMonth(),a,b,ia,ib,mode,
+      ...(mode==="percent" ? {pa} : {})
     })) {
       renderBook();
       tab("home");
