@@ -1,6 +1,6 @@
 // 電波がない場所でも起動できるように、画面ファイルを端末に保存する。
 // 画面を更新したら CACHE の番号を上げる。
-const CACHE = "futari-v1";
+const CACHE = "futari-v2";
 const CORE = [
   "./",
   "index.html",

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport"
       content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#276958">
+<meta name="theme-color" content="#FFF8F3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -16,11 +16,14 @@
 <title>ふたりの家計</title>
 <style>
 :root {
-  --green:#276958;
-  --ink:#243d34;
-  --muted:#617367;
-  --bg:#f5f5ef;
-  --line:#e1e8df;
+  --coral:#C8432C;
+  --coral-soft:#FDECE6;
+  --peach:#F07A55;
+  --mint:#9FDCC8;
+  --ink:#3B2A26;
+  --muted:#7A635C;
+  --bg:#FFF8F3;
+  --line:#F3E3DA;
 }
 * { box-sizing:border-box; }
 html { -webkit-text-size-adjust:100%; }
@@ -57,11 +60,17 @@ p { line-height:1.7; }
   margin-top:18px;
   padding:21px;
   border:1px solid var(--line);
-  border-radius:21px;
+  border-radius:24px;
   background:white;
+  box-shadow:0 6px 20px rgba(200,67,44,.06);
 }
-.hero { background:var(--green); color:white; border:0; }
-.hero .muted { color:#daebdf; }
+.hero {
+  background:linear-gradient(135deg,#D9472F 0%,var(--peach) 100%);
+  color:white;
+  border:0;
+  box-shadow:0 12px 28px rgba(217,71,47,.28);
+}
+.hero .muted,.hero .split { color:white; font-weight:600; }
 .total {
   margin:8px 0 20px;
   font-size:clamp(28px,8vw,42px);
@@ -78,9 +87,9 @@ input,select,textarea {
   min-width:0;
   margin-top:7px;
   padding:12px;
-  border:1px solid #d4dfd4;
-  border-radius:12px;
-  background:#fafbf8;
+  border:1px solid #EBD6CB;
+  border-radius:14px;
+  background:#FFFCFA;
   color:var(--ink);
   font-size:16px;
 }
@@ -92,8 +101,8 @@ button,.button {
   min-height:46px;
   padding:13px;
   border:0;
-  border-radius:12px;
-  background:var(--green);
+  border-radius:14px;
+  background:var(--coral);
   color:white;
   font-size:15px;
   font-weight:600;
@@ -103,7 +112,7 @@ button,.button {
   touch-action:manipulation;
 }
 button:disabled { opacity:.45; cursor:default; }
-.secondary { background:#edf2ec; color:var(--green); }
+.secondary { background:var(--coral-soft); color:#A8361F; }
 .lineButton { background:#079e45; }
 .danger { background:#f6eeea; color:#8b5143; }
 .month { max-width:168px; margin:0; }
@@ -119,13 +128,17 @@ nav {
 }
 nav button {
   padding:12px 3px;
-  background:#e8eee6;
-  color:#385a48;
+  background:white;
+  border:1px solid var(--line);
+  border-radius:999px;
+  color:var(--muted);
   font-size:13px;
 }
 nav button[aria-pressed="true"] {
-  background:var(--green);
+  background:var(--coral);
+  border-color:var(--coral);
   color:white;
+  box-shadow:0 4px 12px rgba(200,67,44,.25);
 }
 [hidden] { display:none !important; }
 .split {
@@ -140,10 +153,15 @@ nav button[aria-pressed="true"] {
   margin:18px 0;
   overflow:hidden;
   border-radius:9px;
-  background:#b6d3b6;
+  background:var(--mint);
 }
-.bar span { display:block; height:100%; background:#e8c899; }
-#settlement { font-size:21px; font-weight:700; overflow-wrap:anywhere; }
+.bar span { display:block; height:100%; background:#FFE3D3; }
+#settlement {
+  font-size:21px;
+  font-weight:700;
+  color:var(--coral);
+  overflow-wrap:anywhere;
+}
 .entry {
   display:flex;
   align-items:center;
@@ -172,7 +190,7 @@ nav button[aria-pressed="true"] {
 summary { padding:10px 0; cursor:pointer; font-weight:600; }
 footer { margin-top:25px; text-align:center; }
 button:focus-visible,a:focus-visible,summary:focus-visible {
-  outline:3px solid #c9a35a;
+  outline:3px solid var(--peach);
   outline-offset:3px;
 }
 @media(max-width:370px) {
