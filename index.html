@@ -249,6 +249,17 @@ button:focus-visible,a:focus-visible,summary:focus-visible {
       </div>
     </div>
 
+    <div id="fixedCard" class="card" hidden>
+      <h2>毎月の固定費</h2>
+      <p id="fixedSummary" class="muted"></p>
+      <div id="fixedPending"></div>
+      <button type="button" id="applyFixed" style="margin-top:16px">
+        この月に追加する
+      </button>
+      <button type="button" id="skipFixed" class="secondary"
+              style="margin-top:10px">この月は追加しない</button>
+    </div>
+
     <div class="card">
       <h2>今月の精算</h2>
       <p id="settlement"></p>
@@ -331,7 +342,9 @@ button:focus-visible,a:focus-visible,summary:focus-visible {
       <h2>この月の収入と分担</h2>
       <p class="muted">
         設定は月ごとに保存します。過去の月の割合は変わりません。
+        初めて開く月は、直前の月の設定を自動で引き継ぎます。
       </p>
+      <p id="settingsSource" class="notice" hidden></p>
       <div class="grid">
         <label>
           1人目の名前
@@ -365,6 +378,54 @@ button:focus-visible,a:focus-visible,summary:focus-visible {
         1人目の負担額を円単位に四捨五入し、残額を2人目に割り当てます。
       </p>
       <button id="saveSettings">この月の設定を保存</button>
+    </form>
+
+    <form id="fixedForm" class="card">
+      <h2>毎月の固定費</h2>
+      <p class="muted">
+        家賃・保育料など毎月同じ支出を登録しておくと、
+        各月の「今月」画面からまとめて追加できます。
+        金額が違う月は、追加した後でその支出を削除して登録し直してください。
+      </p>
+      <div id="fixedList"></div>
+      <div class="grid" style="margin-top:16px">
+        <label>
+          項目
+          <select id="fixedCategory"></select>
+        </label>
+        <label>
+          金額（円）
+          <input id="fixedAmount" type="number" inputmode="numeric"
+                 min="1" max="100000000" step="1"
+                 placeholder="例：80000" required>
+        </label>
+      </div>
+      <div class="grid">
+        <label>
+          支払う人
+          <select id="fixedPayer">
+            <option value="a">あなた</option>
+            <option value="b">パートナー</option>
+          </select>
+        </label>
+        <label>
+          毎月の日付
+          <input id="fixedDay" type="number" inputmode="numeric"
+                 min="1" max="31" step="1" value="1" required>
+        </label>
+      </div>
+      <label>
+        メモ（任意）
+        <input id="fixedMemo" maxlength="80" placeholder="例：家賃">
+      </label>
+      <label class="check">
+        <input id="fixedShared" type="checkbox" checked>
+        ふたりの生活費として分担する
+      </label>
+      <p class="muted">
+        31日など月にない日付は、その月の末日で登録します。
+      </p>
+      <button id="saveFixed">固定費を登録</button>
     </form>
 
     <div class="card">
@@ -551,7 +612,10 @@ button:focus-visible,a:focus-visible,summary:focus-visible {
     "混在・未確認"
   ];
 
-  categories.forEach(name => $("category").add(new Option(name,name)));
+  categories.forEach(name => {
+    $("category").add(new Option(name,name));
+    $("fixedCategory").add(new Option(name,name));
+  });
   kinds.forEach(name => $("assetKind").add(new Option(name,name)));
 
   // ---------- ホーム画面アプリとしての設定 ----------
@@ -627,6 +691,11 @@ button:focus-visible,a:focus-visible,summary:focus-visible {
           !["income","equal"].includes(m.mode)) {
         throw Error("月別データの形式・件数が不正です");
       }
+      if (m.fixedDone!==undefined &&
+          (!Array.isArray(m.fixedDone) || m.fixedDone.length>200 ||
+           !m.fixedDone.every(id=>typeof id==="string"))) {
+        throw Error("固定費の追加記録が不正です");
+      }
       for (const r of m.rows) {
         if (!r || !isDate(r.date) ||
             r.date.slice(0,7)!==key ||
@@ -635,8 +704,26 @@ button:focus-visible,a:focus-visible,summary:focus-visible {
             typeof r.shared!=="boolean" ||
             typeof r.category!=="string" ||
             !r.category.trim() || r.category.length>30 ||
-            typeof r.memo!=="string" || r.memo.length>80) {
+            typeof r.memo!=="string" || r.memo.length>80 ||
+            (r.fixedId!==undefined && typeof r.fixedId!=="string")) {
           throw Error("支出データの形式が不正です");
+        }
+      }
+    }
+    if (data.fixed!==undefined) {
+      if (!Array.isArray(data.fixed) || data.fixed.length>100) {
+        throw Error("固定費の形式・件数が不正です");
+      }
+      for (const f of data.fixed) {
+        if (!f || typeof f.id!=="string" || !f.id ||
+            !validMoney(f.amount) || f.amount===0 ||
+            !["a","b"].includes(f.payer) ||
+            typeof f.shared!=="boolean" ||
+            typeof f.category!=="string" ||
+            !f.category.trim() || f.category.length>30 ||
+            typeof f.memo!=="string" || f.memo.length>80 ||
+            !Number.isInteger(f.day) || f.day<1 || f.day>31) {
+          throw Error("固定費の形式が不正です");
         }
       }
     }
@@ -738,17 +825,33 @@ button:focus-visible,a:focus-visible,summary:focus-visible {
   $("month").value = localToday().slice(0,7);
   $("saveExpense").disabled = book.blocked;
   $("saveSettings").disabled = book.blocked;
+  $("saveFixed").disabled = book.blocked;
   $("importFile").disabled = book.blocked;
   $("exportBook").disabled = book.blocked;
   $("saveAsset").disabled = assets.blocked;
   $("exportAssets").disabled = assets.blocked;
 
+  // まだ保存していない月は、直前の月（なければ直後の月）の設定を使う。
+  function settingsSource(key,months=book.value.months) {
+    const keys = Object.keys(months).filter(k=>k!==key).sort();
+    return keys.filter(k=>k<key).pop() || keys.find(k=>k>key) || null;
+  }
+
+  function inheritedMonth(key,months=book.value.months) {
+    const source = settingsSource(key,months);
+    if (!source) return blankMonth();
+    const {a,b,ia,ib,mode} = months[source];
+    return {a,b,ia,ib,mode,rows:[]};
+  }
+
   function currentMonth() {
-    return book.value.months[$("month").value] || blankMonth();
+    const key = $("month").value;
+    return book.value.months[key] || inheritedMonth(key);
   }
 
   function saveMonth(key,m) {
     return book.put({
+      ...book.value,
       months:{...book.value.months,[key]:m}
     });
   }
@@ -876,6 +979,16 @@ button:focus-visible,a:focus-visible,summary:focus-visible {
     $("mode").value = m.mode;
     $("payer").options[0].textContent = m.a;
     $("payer").options[1].textContent = m.b;
+    $("fixedPayer").options[0].textContent = m.a;
+    $("fixedPayer").options[1].textContent = m.b;
+
+    const key = $("month").value;
+    const source = book.value.months[key] ? null : settingsSource(key);
+    $("settingsSource").hidden = !source;
+    $("settingsSource").textContent = source
+      ? `${source}の設定を引き継いで表示しています。` +
+        "手取りが変わった月だけ修正して保存してください。"
+      : "";
 
     $("entries").replaceChildren();
     if (!m.rows.length) {
@@ -931,7 +1044,160 @@ button:focus-visible,a:focus-visible,summary:focus-visible {
       });
 
     renderChildren(m);
+    renderFixed(m);
   }
+
+  // ---------- 毎月の固定費 ----------
+
+  function fixedTemplates() {
+    return book.value.fixed || [];
+  }
+
+  function pendingFixed(m) {
+    const done = new Set(m.fixedDone || []);
+    return fixedTemplates().filter(f=>!done.has(f.id));
+  }
+
+  function fixedDate(key,day) {
+    const [y,mo] = key.split("-").map(Number);
+    const last = new Date(y,mo,0).getDate();
+    return `${key}-${String(Math.min(day,last)).padStart(2,"0")}`;
+  }
+
+  function fixedLabel(f,m) {
+    return `毎月${f.day}日 · ${m[f.payer]} · `+
+      (f.shared ? "生活費" : "個人の支出");
+  }
+
+  function renderFixed(m) {
+    const pending = pendingFixed(m);
+    $("fixedCard").hidden = !pending.length;
+    $("fixedPending").replaceChildren();
+    if (pending.length) {
+      const total = pending.reduce((sum,f)=>sum+f.amount,0);
+      $("fixedSummary").textContent =
+        `この月にまだ追加していない固定費が${pending.length}件`+
+        `（合計 ${yen(total)}）あります。`;
+      pending.forEach(f=>{
+        const row = element("div",undefined,"entry");
+        const detail = element("div",undefined,"detail");
+        detail.append(
+          element("strong",f.category+(f.memo ? " · "+f.memo : "")),
+          element("small",fixedLabel(f,m))
+        );
+        row.append(detail,element("span",yen(f.amount),"money"));
+        $("fixedPending").append(row);
+      });
+    }
+    $("applyFixed").disabled = book.blocked;
+    $("skipFixed").disabled = book.blocked;
+
+    $("fixedList").replaceChildren();
+    if (!fixedTemplates().length) {
+      $("fixedList").append(element(
+        "p","まだ登録がありません。","muted"
+      ));
+    }
+    fixedTemplates().forEach(f=>{
+      const row = element("div",undefined,"entry");
+      const detail = element("div",undefined,"detail");
+      detail.append(
+        element("strong",f.category+(f.memo ? " · "+f.memo : "")),
+        element("small",fixedLabel(f,m))
+      );
+      const remove = element("button","削除","remove danger");
+      remove.type = "button";
+      remove.disabled = book.blocked;
+      remove.onclick = ()=>{
+        if (!confirm(
+          `固定費「${f.category} ${yen(f.amount)}」を削除しますか？\n`+
+          "追加済みの月の支出は消えません。"
+        )) return;
+        if (book.put({
+          ...book.value,
+          fixed:fixedTemplates().filter(x=>x.id!==f.id)
+        })) {
+          renderBook();
+          $("status").textContent = "固定費を削除しました。";
+        }
+      };
+      row.append(detail,element("span",yen(f.amount),"money"),remove);
+      $("fixedList").append(row);
+    });
+  }
+
+  $("fixedForm").onsubmit = event=>{
+    event.preventDefault();
+    const amount = Number($("fixedAmount").value);
+    const day = Number($("fixedDay").value);
+    if (!validMoney(amount) || amount===0) {
+      alert("金額は1円以上の整数で入力してください。");
+      return;
+    }
+    if (!Number.isInteger(day) || day<1 || day>31) {
+      alert("日付は1〜31で入力してください。");
+      return;
+    }
+    if (fixedTemplates().length>=100) {
+      alert("固定費は100件まで登録できます。");
+      return;
+    }
+    const template = {
+      id:globalThis.crypto?.randomUUID
+        ? globalThis.crypto.randomUUID()
+        : Date.now()+"-"+Math.random().toString(36).slice(2),
+      category:$("fixedCategory").value,
+      amount,day,
+      payer:$("fixedPayer").value,
+      memo:$("fixedMemo").value.trim(),
+      shared:$("fixedShared").checked
+    };
+    if (book.put({...book.value,fixed:[...fixedTemplates(),template]})) {
+      $("fixedAmount").value = "";
+      $("fixedMemo").value = "";
+      renderBook();
+      $("status").textContent =
+        "固定費を登録しました。「今月」画面から各月に追加できます。";
+    }
+  };
+
+  function finishFixed(addRows) {
+    const key = $("month").value;
+    const m = currentMonth();
+    const pending = pendingFixed(m);
+    if (!pending.length) return;
+
+    const rows = addRows ? pending.map(f=>({
+      date:fixedDate(key,f.day),
+      amount:f.amount,
+      category:f.category,
+      payer:f.payer,
+      memo:f.memo,
+      shared:f.shared,
+      fixedId:f.id
+    })) : [];
+    if (m.rows.length+rows.length>10000) {
+      alert("この月の登録上限（1万件）を超えます。");
+      return;
+    }
+    if (saveMonth(key,{
+      ...m,
+      rows:[...m.rows,...rows],
+      fixedDone:[...(m.fixedDone || []),...pending.map(f=>f.id)]
+    })) {
+      renderBook();
+      $("status").textContent = addRows
+        ? `固定費${rows.length}件を追加しました。`
+        : "この月は固定費を追加しませんでした。";
+    }
+  }
+
+  $("applyFixed").onclick = ()=>finishFixed(true);
+  $("skipFixed").onclick = ()=>{
+    if (confirm("この月は固定費を追加せずに、案内を閉じますか？")) {
+      finishFixed(false);
+    }
+  };
 
   $("month").onchange = ()=>{
     if (!/^\d{4}-(0[1-9]|1[0-2])$/.test($("month").value)) {
@@ -1302,7 +1568,8 @@ button:focus-visible,a:focus-visible,summary:focus-visible {
         "まだ保存していません。";
 
       accepted.forEach(r=>{
-        const m = book.value.months[r.date.slice(0,7)] || blankMonth();
+        const key = r.date.slice(0,7);
+        const m = book.value.months[key] || inheritedMonth(key);
         const row = element("div",undefined,"entry");
         const detail = element("div",undefined,"detail");
         detail.append(
@@ -1350,7 +1617,9 @@ button:focus-visible,a:focus-visible,summary:focus-visible {
     accepted.forEach(r=>{
       const key = r.date.slice(0,7);
       months.add(key);
-      if (!next.months[key]) next.months[key] = blankMonth();
+      if (!next.months[key]) {
+        next.months[key] = inheritedMonth(key,next.months);
+      }
       next.months[key].rows.push(r);
     });
 
@@ -1369,7 +1638,7 @@ button:focus-visible,a:focus-visible,summary:focus-visible {
       tab("home");
       $("status").textContent =
         `${months.size}か月分・${accepted.length}件を取り込みました。`+
-        "初めて登録した月は、設定で収入と名前を登録してください。";
+        "初めての月は前月の設定を引き継いでいます。必要なら設定で修正してください。";
     }
   };
 
